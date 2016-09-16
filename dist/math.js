@@ -7,7 +7,7 @@
  * mathematical functions, and a flexible expression parser.
  *
  * @version 3.4.1
- * @date    2016-09-03
+ * @date    2016-09-16
  *
  * @license
  * Copyright (C) 2013-2016 Jos de Jong <wjosdejong@gmail.com>
@@ -22490,9 +22490,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        switch (size2.length) {
 	          case 1:
 	            // Vector x Vector
-	            if (size1[0] !== size2[0]) {
+	            if (size1[0] != 1) {
 	              // throw error
-	              throw new RangeError('Dimension mismatch in multiplication. Vectors must have the same length');
+	              throw new RangeError('Dimension mismatch in multiplication.');
 	            }
 	            break;
 	          case 2:
@@ -22511,9 +22511,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        switch (size2.length) {
 	          case 1:
 	            // Matrix x Vector
-	            if (size1[1] !== size2[0]) {
+	            if (size1[1] !== 1) {
 	              // throw error
-	              throw new RangeError('Dimension mismatch in multiplication. Matrix columns (' + size1[1] + ') must match Vector length (' + size2[0] + ')');
+	              throw new RangeError('Dimension mismatch in multiplication.');
 	            }
 	            break;
 	          case 2:
@@ -22748,20 +22748,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0; i < arows; i++) {
 	      // current row
 	      var row = adata[i];
-	      // sum (do not initialize it with zero)
-	      var sum = mf(row[0], bdata[0]);
-	      // loop matrix a columns
-	      for (var j = 1; j < acolumns; j++) {
-	        // multiply & accumulate
-	        sum = af(sum, mf(row[j], bdata[j]));
+	      // initialize row array
+	      c[i] = [];
+	      // loop matrix b columns
+	      for (var j = 0; j < bcolumns; j++) {
+	        // sum (avoid initializing sum to zero)
+	        var sum = mf(row[0], bdata[0][j]);
+	        // loop matrix a columns
+	        for (var x = 1; x < acolumns; x++) {
+	          // multiply & accumulate
+	          sum = af(sum, mf(row[x], bdata[x][j]));
+	        }
+	        c[i][j] = sum;
 	      }
-	      c[i] = sum;
 	    }
 
 	    // return matrix
 	    return new DenseMatrix({
 	      data: c,
-	      size: [arows],
+	      size: [arows, bcolumns],
 	      datatype: dt
 	    });
 	  };
