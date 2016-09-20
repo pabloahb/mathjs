@@ -7,7 +7,7 @@
  * mathematical functions, and a flexible expression parser.
  *
  * @version 3.4.1
- * @date    2016-09-16
+ * @date    2016-09-20
  *
  * @license
  * Copyright (C) 2013-2016 Jos de Jong <wjosdejong@gmail.com>
@@ -22416,7 +22416,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // process y dimensions
 	        if (ysize.length === 1) {
 	          // Vector * Vector
-	          return _multiplyVectorVector(x, y, xsize[0]);
+	          return _multiplyVectorVector(x, y, ysize[0]);
 	        }
 	        // Vector * Matrix
 	        return _multiplyVectorMatrix(x, y);
@@ -22538,19 +22538,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {Matrix} a            Dense Vector   (N)
 	   * @param {Matrix} b            Dense Vector   (N)
 	   *
-	   * @return {number}             Scalar value
+	   * @return {Matrix}             Dense Vector
 	   */
 	  var _multiplyVectorVector = function (a, b, n) {
 	    // check empty vector
 	    if (n === 0)
-	      throw new Error('Cannot multiply two empty vectors');
+	      throw new Error('Cannot multiply empty vectors');
 
-	    // a dense
+
+	   
+	   // a dense
 	    var adata = a._data;
+		return multiply(adata[0],b);
+		
+		/*
 	    var adt = a._datatype;
 	    // b dense
 	    var bdata = b._data;
 	    var bdt = b._datatype;
+		var bcolumns=n;
 
 	    // datatype
 	    var dt;
@@ -22568,14 +22574,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	      mf = typed.find(multiplyScalar, [dt, dt]);
 	    }
 	    
-	    // result (do not initialize it with zero)
-	    var c = mf(adata[0], bdata[0]);
-	    // loop data
-	    for (var i = 1; i < n; i++) {
-	      // multiply and accumulate
-	      c = af(c, mf(adata[i], bdata[i]));
-	    }
-	    return c;
+	    // result
+	    var c = [];
+
+	    // loop matrix a rows
+	    
+	      // current row
+	      var row = adata[0];
+		  console.log(row);
+		  console.log(bdata);
+	      // initialize row array
+	     
+	      // loop matrix b columns
+	      for (var j = 0; j < bcolumns; j++) {
+	        // sum (avoid initializing sum to zero)
+	        var sum = mf(row[0], bdata[j]);
+	        // loop matrix a columns
+	       
+	          sum = af(sum, mf(row[0], bdata[j]));
+	       
+	        c[j] = sum;
+	      }
+	    
+
+	    // return matrix
+	    return new matrix(c);
+		
+		*/
 	  };
 
 	  /**
@@ -22720,6 +22745,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var adt = a._datatype;
 	    // b dense
 	    var bdata = b._data;
+		var bsize=b._size;
+		var bcolumns=bsize[0];
+		console.log(b._size);
 	    var bdt = b._datatype;
 	    // rows & columns
 	    var arows = asize[0];
@@ -22753,7 +22781,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // loop matrix b columns
 	      for (var j = 0; j < bcolumns; j++) {
 	        // sum (avoid initializing sum to zero)
-	        var sum = mf(row[0], bdata[0][j]);
+	        var sum = mf(row[0], bdata[j]);
 	        // loop matrix a columns
 	        for (var x = 1; x < acolumns; x++) {
 	          // multiply & accumulate
@@ -30886,7 +30914,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          closeParams();
 	          getToken();
 
-	          array = row;
+	          //array = new ArrayNode([row]);
+			  array = row;
 	        }
 	      }
 	      else {
@@ -39483,22 +39512,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	    // return matrix
-	    var transposedMatrix;
-		
-		if(columns!=1)
-		{
-			transposedMatrix=new DenseMatrix({
-			data: transposed,
-			size: [columns, rows],
-			datatype: m._datatype
-			});
-		}
-		else
-		{ 
-			//is a vector
-			transposedMatrix=matrix(transposed[0]);
-		}
-		return transposedMatrix;
+	    return new DenseMatrix({
+	      data: transposed,
+	      size: [columns, rows],
+	      datatype: m._datatype
+	    });
 	  };
 
 	  var _sparseTranspose = function (m, rows, columns) {
@@ -44945,7 +44963,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var hasBigNumbers = _normalize(size);
 	    var defaultValue = hasBigNumbers ? new type.BigNumber(0) : 0;
 	    _validate(size);
-
+	    if(size.length==1)
+			{
+				
+				size=[size[0],size[0]];
+			}
 	    if (format) {
 	      // return a matrix
 	      var m = matrix(format);
@@ -49154,6 +49176,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var size = __webpack_require__(40).size;
 
+
 	function factory (type, config, load, typed) {
 	  var matrix   = load(__webpack_require__(52));
 	  var subtract = load(__webpack_require__(77));
@@ -49212,25 +49235,64 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  /**
 	   * Calculate the cross product for two arrays
-	   * @param {Array} x  First vector
-	   * @param {Array} y  Second vector
-	   * @returns {Array} Returns the cross product of x and y
+	   * @param {Matrix} x  First vector
+	   * @param {Matrix} y  Second vector
+	   * @returns {Matrix} Returns the cross product of x and y
 	   * @private
 	   */
 	  function _cross(x, y) {
 	    var xSize= size(x);
 	    var ySize = size(y);
+		var returnMatrix=false;
+		
+		  if(xSize.length != 1)
+		  {
+			  if( xSize[0] != 1)
+			  {
+				  throw new RangeError('Vectors with length 3 expected ' +
+	      '(Size A = [' + xSize.join(', ') + '], B = [' + ySize.join(', ') + '])');
+			  }
+			  else
+			  {
+				  x=x[0,0];
+				  xSize= size(x);
+				  returnMatrix=true;
+				  
+			  }
+		  }	  
 
-	    if (xSize.length != 1 || ySize.length != 1 || xSize[0] != 3 || ySize[0] != 3) {
+		  if(ySize.length != 1)
+		  {
+			  if(  ySize[0] != 1 )
+			  {
+				  throw new RangeError('Vectors with length 3 expected ' +
+	      '(Size A = [' + xSize.join(', ') + '], B = [' + ySize.join(', ') + '])');
+			  }
+			  else
+			  {
+				  y=y[0,0];
+				  ySize = size(y);
+				  returnMatrix=true;
+			  }
+		  
+			  
+		  }
+
+
+	    if ( xSize[0] != 3 || ySize[0] != 3) {
 	      throw new RangeError('Vectors with length 3 expected ' +
 	      '(Size A = [' + xSize.join(', ') + '], B = [' + ySize.join(', ') + '])');
 	    }
-
-	    return [
+	    var result=[
 	      subtract(multiply(x[1], y[2]), multiply(x[2], y[1])),
 	      subtract(multiply(x[2], y[0]), multiply(x[0], y[2])),
 	      subtract(multiply(x[0], y[1]), multiply(x[1], y[0]))
 	    ];
+		if(returnMatrix)
+		{return [result];}
+		else
+		{return result;}
+		
 	  }
 	}
 
@@ -49481,8 +49543,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var xSize= size(x);
 	    var ySize = size(y);
 	    var len = xSize[0];
+		
 
-	    if (xSize.length !== 1 || ySize.length !== 1) throw new RangeError('Vector expected'); // TODO: better error message
+	    if (xSize.length !== 1)
+		{
+			if(xSize[0]==1)
+			{
+			x=x[0,0];
+			var xSize = size(x);
+			var len = xSize[0];
+			}
+			else
+			{
+				throw new RangeError('Expecting vectors');
+			}
+				
+			
+		}
+		
+		if (ySize.length !== 1)
+		{
+			if(ySize[0]==1)
+			{
+			y=y[0,0];
+			var ySize = size(y);
+			}
+			else
+			{
+				throw new RangeError('Expecting vectors');
+			}
+				
+		}
+		
+
+
+			
 	    if (xSize[0] != ySize[0]) throw new RangeError('Vectors must have equal length (' + xSize[0] + ' != ' + ySize[0] + ')');
 	    if (len == 0) throw new RangeError('Cannot calculate the dot product of empty vectors');
 
@@ -49645,12 +49740,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var hasBigNumbers = _normalize(size);
 	    var defaultValue = hasBigNumbers ? new type.BigNumber(1) : 1;
 	    _validate(size);
-
+	    if(size.length==1)
+			{
+				
+				size=[size[0],size[0]];
+			}
 	    if (format) {
 	      // return a matrix
 	      var m = matrix(format);
 	      if (size.length > 0) {
-	        return m.resize(size, defaultValue);
+	       
+			
+			
+			return m.resize(size, defaultValue);
+			
 	      }
 	      return m;
 	    }
