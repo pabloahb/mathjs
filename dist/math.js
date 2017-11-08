@@ -7,7 +7,7 @@
  * mathematical functions, and a flexible expression parser.
  *
  * @version 3.4.1
- * @date    2016-09-20
+ * @date    2017-11-07
  *
  * @license
  * Copyright (C) 2013-2016 Jos de Jong <wjosdejong@gmail.com>
@@ -24788,6 +24788,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
+	process.prependListener = noop;
+	process.prependOnceListener = noop;
+
+	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -50551,6 +50555,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var divide = load(__webpack_require__(326));
 	    var sum = load(__webpack_require__(447));
 	    var multiply = load(__webpack_require__(84));
+	    var transpose = load(__webpack_require__(344));
 	    var dotDivide = load(__webpack_require__(368));
 	    var log = load(__webpack_require__(382));
 	    var isNumeric = load(__webpack_require__(89));
@@ -50618,7 +50623,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var qnorm = divide(q, sum(q));
 	        var pnorm = divide(p, sum(p));
 
-	        var result = sum(multiply(qnorm, log(dotDivide(qnorm, pnorm))));
+	        var result = sum(multiply(qnorm, transpose(log(dotDivide(qnorm, pnorm)))));
 	        if (isNumeric(result)) {
 	            return result;
 	        }
